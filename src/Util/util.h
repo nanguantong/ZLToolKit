@@ -24,6 +24,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <atomic>
 #include <unordered_map>
 #if defined(_WIN32)
 #include <WinSock2.h>
@@ -31,6 +32,8 @@
 #else
 #include <unistd.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <stddef.h>
 #endif // defined(_WIN32)
 
 #if defined(__APPLE__)
@@ -147,6 +150,33 @@ private:
     ~Creator() = default;
 };
 
+
+template <class C>
+class ObjectStatistic{
+public:
+    ObjectStatistic(){
+        ++getCounter();
+    }
+
+    ~ObjectStatistic(){
+        --getCounter();
+    }
+
+    static size_t count(){
+        return getCounter().load();
+    }
+
+private:
+    static atomic<size_t> & getCounter();
+};
+
+#define StatisticImp(Type)  \
+    template<> \
+    atomic<size_t>& ObjectStatistic<Type>::getCounter(){ \
+        static atomic<size_t> instance(0); \
+        return instance; \
+    }
+
 string makeRandStr(int sz, bool printable = true);
 string hexdump(const void *buf, size_t len);
 string exePath();
@@ -176,10 +206,6 @@ bool end_with(const string &str, const string &substr);
 #define bzero(ptr,size)  memset((ptr),0,(size));
 #endif //bzero
 
-#ifndef ssize_t
-#define ssize_t int64_t
-#endif
-
 #if defined(ANDROID)
 template <typename T>
 std::string to_string(T value){
@@ -198,6 +224,9 @@ int asprintf(char **strp, const char *fmt, ...);
 #define strcasecmp _stricmp
 #endif
 const char *strcasestr(const char *big, const char *little);
+#ifndef ssize_t
+#define ssize_t int64_t
+#endif
 #endif //WIN32
 
 /**

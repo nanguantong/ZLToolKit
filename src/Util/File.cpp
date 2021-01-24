@@ -239,7 +239,7 @@ string File::loadFile(const char *path) {
     fseek(fp,0,SEEK_SET);
     string str(len,'\0');
     if (0 <= fread((char *) str.data(), str.size(), 1, fp)) {
-        WarnL << "fread failed:" << get_uv_errmsg();
+        WarnL << "fread " << path << " failed:" << get_uv_errmsg();
     }
     fclose(fp);
     return str;
@@ -288,7 +288,7 @@ string File::absolutePath(const string &path,const string &currentPath_in,bool c
         //确保当前目录最后字节为'/'
         currentPath.push_back('/');
     }
-
+    auto rootPath = currentPath;
     auto dir_vec = split(path,"/");
     for(auto &dir : dir_vec){
         if(dir.empty() || dir == "."){
@@ -297,7 +297,7 @@ string File::absolutePath(const string &path,const string &currentPath_in,bool c
         }
         if(dir == ".."){
             //访问上级目录
-            if(!canAccessParent && currentPath.size() <= currentPath_in.size()){
+            if(!canAccessParent && currentPath.size() <= rootPath.size()){
                 //不能访问根目录之外的目录
                 return "";
             }
