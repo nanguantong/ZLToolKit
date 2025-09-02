@@ -1,14 +1,14 @@
 ﻿/*
  * Copyright (c) 2016 The ZLToolKit project authors. All Rights Reserved.
  *
- * This file is part of ZLToolKit(https://github.com/xia-chu/ZLToolKit).
+ * This file is part of ZLToolKit(https://github.com/ZLMediaKit/ZLToolKit).
  *
  * Use of this source code is governed by MIT license that can be found in the
  * LICENSE file in the root of the source tree. All contributing project authors
  * may be found in the AUTHORS file in the root of the source tree.
  */
 
-#include <signal.h>
+#include <csignal>
 #include <iostream>
 #include "Util/util.h"
 #include "Util/logger.h"
@@ -19,7 +19,8 @@ using namespace std;
 using namespace toolkit;
 
 int main() {
-    //设置日志
+    //设置日志  [AUTO-TRANSLATED:50372045]
+    // Set log
     Logger::Instance().add(std::make_shared<ConsoleChannel>());
     Logger::Instance().setWriter(std::make_shared<AsyncLogWriter>());
 
@@ -43,7 +44,8 @@ int main() {
         throw std::runtime_error("timer2,测试任务中抛异常");
     },nullptr);
 
-    //退出程序事件处理
+    //退出程序事件处理  [AUTO-TRANSLATED:80065cb7]
+    // Exit program event handling
     static semaphore sem;
     signal(SIGINT, [](int) { sem.post(); });// 设置退出信号
     sem.wait();

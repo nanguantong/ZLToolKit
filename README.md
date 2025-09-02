@@ -1,17 +1,20 @@
 # 一个基于C++11简单易用的轻量级网络编程框架
-[![Build Status](https://travis-ci.org/xiongziliang/ZLToolKit.svg?branch=master)](https://travis-ci.org/xiongziliang/ZLToolKit)
+
+![](https://github.com/ZLMediaKit/ZLToolKit/actions/workflows/linux.yml/badge.svg)
+![](https://github.com/ZLMediaKit/ZLToolKit/actions/workflows/macos.yml/badge.svg)
+![](https://github.com/ZLMediaKit/ZLToolKit/actions/workflows/windows.yml/badge.svg)
 
 ## 项目特点
 - 基于C++11开发，避免使用裸指针，代码稳定可靠；同时跨平台移植简单方便，代码清晰简洁。
 - 使用epoll+线程池+异步网络IO模式开发，并发性能优越。
 - 代码经过大量的稳定性、性能测试，可满足商用服务器项目。
 - 支持linux、macos、ios、android、windows平台
-- 了解更多:[ZLMediaKit](https://github.com/xia-chu/ZLMediaKit)
+- 了解更多:[ZLMediaKit](https://github.com/ZLMediaKit/ZLMediaKit)
 
 ## 特性
 - 网络库
   - tcp/udp客户端，接口简单易用并且是线程安全的，用户不必关心具体的socket api操作。
-  - tcp服务器，使用非常简单，只要实现具体的tcp会话（TcpSession类）逻辑,使用模板的方式可以快速的构建高性能的服务器。
+  - tcp/udp服务器，使用非常简单，只要实现具体的tcp/udp会话（Session类）逻辑,使用模板的方式可以快速的构建高性能的服务器。
   - 对套接字多种操作的封装。
 - 线程库
   - 使用线程实现的简单易用的定时器。
@@ -29,6 +32,14 @@
   - 简单易用的ssl加解密黑盒，支持多线程。
   - 其他一些有用的工具。
   - 命令行解析工具，可以很便捷的实现可配置应用程序
+ 
+## 网络IO适配
+
+|      | Linux(Android)    | Windows             | MacOS(iOS/Unix)  |
+|:----:|:-----------------:|:-------------------:|:----------------:|
+| 多路复用 | epoll/select      | wepoll(iocp)/select | kqueue/select    |
+| udp  | recvmmsg/sendmmsg | recvfrom/WSASend    | recvfrom/sendto  |
+| tcp  | recvfrom/sendmsg  | recvfrom/WSASend    | recvfrom/sendmsg |
 
 ## 编译(Linux)
 - 我的编译环境
@@ -109,7 +120,7 @@
 ## QA
  - 该库性能怎么样？
 
-基于ZLToolKit，我实现了一个流媒体服务器[ZLMediaKit](https://github.com/xia-chu/ZLMediaKit);作者已经对其进行了性能测试，可以查看[benchmark.md](https://github.com/xia-chu/ZLMediaKit/blob/master/benchmark.md)了解详情。
+基于ZLToolKit，我实现了一个流媒体服务器[ZLMediaKit](https://github.com/ZLMediaKit/ZLMediaKit);作者已经对其进行了性能测试，可以查看[benchmark.md](https://github.com/ZLMediaKit/ZLMediaKit/blob/master/benchmark.md)了解详情。
 
  - 该库稳定性怎么样？
 

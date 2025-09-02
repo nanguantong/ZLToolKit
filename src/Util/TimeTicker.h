@@ -1,7 +1,7 @@
 ﻿/*
  * Copyright (c) 2016 The ZLToolKit project authors. All Rights Reserved.
  *
- * This file is part of ZLToolKit(https://github.com/xia-chu/ZLToolKit).
+ * This file is part of ZLToolKit(https://github.com/ZLMediaKit/ZLToolKit).
  *
  * Use of this source code is governed by MIT license that can be found in the
  * LICENSE file in the root of the source tree. All contributing project authors
@@ -11,9 +11,8 @@
 #ifndef UTIL_TIMETICKER_H_
 #define UTIL_TIMETICKER_H_
 
-#include <assert.h>
+#include <cassert>
 #include "logger.h"
-#include "Util/util.h"
 
 namespace toolkit {
 
@@ -24,9 +23,15 @@ public:
      * @param min_ms 开启码执行时间统计时，如果代码执行耗时超过该参数，则打印警告日志
      * @param ctx 日志上下文捕获，用于捕获当前日志代码所在位置
      * @param print_log 是否打印代码执行时间
+     * This object can be used for code execution time statistics, and can be used for general timing
+     * @param min_ms When the code execution time statistics is enabled, if the code execution time exceeds this parameter, a warning log is printed
+     * @param ctx Log context capture, used to capture the current log code location
+     * @param print_log Whether to print the code execution time
+     
+     * [AUTO-TRANSLATED:4436cf19]
      */
     Ticker(uint64_t min_ms = 0,
-           LogContextCapturer ctx = LogContextCapturer(Logger::Instance(), LWarn, __FILE__, "", __LINE__),
+           LogContextCapture ctx = LogContextCapture(Logger::Instance(), LWarn, __FILE__, "", __LINE__),
            bool print_log = false) : _ctx(std::move(ctx)) {
         if (!print_log) {
             _ctx.clear();
@@ -38,21 +43,27 @@ public:
     ~Ticker() {
         uint64_t tm = createdTime();
         if (tm > _min_ms) {
-            _ctx << "take time:" << tm << "ms" << ", thread may be overloaded";
+            _ctx << "take time: " << tm << "ms" << ", thread may be overloaded";
         } else {
             _ctx.clear();
         }
     }
 
     /**
-     * 获取创建时间，单位毫秒
+     * 获取上次resetTime后至今的时间，单位毫秒
+     * Get the time from the last resetTime to now, in milliseconds
+     
+     * [AUTO-TRANSLATED:739ad90a]
      */
     uint64_t elapsedTime() const {
         return getCurrentMillisecond() - _begin;
     }
 
     /**
-     * 获取上次resetTime后至今的时间，单位毫秒
+     * 获取从创建至今的时间，单位毫秒
+     * Get the time from creation to now, in milliseconds
+     
+     * [AUTO-TRANSLATED:83a189e2]
      */
     uint64_t createdTime() const {
         return getCurrentMillisecond() - _created;
@@ -60,6 +71,9 @@ public:
 
     /**
      * 重置计时器
+     * Reset the timer
+     
+     * [AUTO-TRANSLATED:2500c6f1]
      */
     void resetTime() {
         _begin = getCurrentMillisecond();
@@ -69,7 +83,7 @@ private:
     uint64_t _min_ms;
     uint64_t _begin;
     uint64_t _created;
-    LogContextCapturer _ctx;
+    LogContextCapture _ctx;
 };
 
 class SmoothTicker {
@@ -77,6 +91,10 @@ public:
     /**
      * 此对象用于生成平滑的时间戳
      * @param reset_ms 时间戳重置间隔，没间隔reset_ms毫秒, 生成的时间戳会同步一次系统时间戳
+     * This object is used to generate smooth timestamps
+     * @param reset_ms Timestamp reset interval, every reset_ms milliseconds, the generated timestamp will be synchronized with the system timestamp
+     
+     * [AUTO-TRANSLATED:0ff567e7]
      */
     SmoothTicker(uint64_t reset_ms = 10000) {
         _reset_ms = reset_ms;
@@ -87,6 +105,9 @@ public:
 
     /**
      * 返回平滑的时间戳，防止由于网络抖动导致时间戳不平滑
+     * Return a smooth timestamp, to prevent the timestamp from being unsmooth due to network jitter
+     
+     * [AUTO-TRANSLATED:26f78ae3]
      */
     uint64_t elapsedTime() {
         auto now_time = _ticker.elapsedTime();
@@ -96,8 +117,8 @@ public:
                 double elapse_time = (now_time - last_time);
                 _time_inc += (elapse_time / ++_pkt_count) / 3;
                 auto ret_time = last_time + _time_inc;
-                _last_time = (uint64_t)ret_time;
-                return (uint64_t)ret_time;
+                _last_time = (uint64_t) ret_time;
+                return (uint64_t) ret_time;
             }
             _first_time = now_time;
             _last_time = now_time;
@@ -112,12 +133,15 @@ public:
         if (elapse_time > _reset_ms) {
             _first_time = 0;
         }
-        _last_time = (uint64_t)ret_time;
-        return (uint64_t)ret_time;
+        _last_time = (uint64_t) ret_time;
+        return (uint64_t) ret_time;
     }
 
     /**
      * 时间戳重置为0开始
+     * Reset the timestamp to start from 0
+     
+     * [AUTO-TRANSLATED:ca42c3d1]
      */
     void resetTime() {
         _first_time = 0;
@@ -135,13 +159,13 @@ private:
 };
 
 #if !defined(NDEBUG)
-    #define TimeTicker() Ticker __ticker(5,WarnL,true)
-    #define TimeTicker1(tm) Ticker __ticker1(tm,WarnL,true)
-    #define TimeTicker2(tm,log) Ticker __ticker2(tm,log,true)
+#define TimeTicker() Ticker __ticker(5,WarnL,true)
+#define TimeTicker1(tm) Ticker __ticker1(tm,WarnL,true)
+#define TimeTicker2(tm, log) Ticker __ticker2(tm,log,true)
 #else
-    #define TimeTicker()
-    #define TimeTicker1(tm)
-    #define TimeTicker2(tm,log)
+#define TimeTicker()
+#define TimeTicker1(tm)
+#define TimeTicker2(tm,log)
 #endif
 
 } /* namespace toolkit */

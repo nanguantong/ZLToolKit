@@ -1,7 +1,7 @@
 ﻿/*
  * Copyright (c) 2016 The ZLToolKit project authors. All Rights Reserved.
  *
- * This file is part of ZLToolKit(https://github.com/xia-chu/ZLToolKit).
+ * This file is part of ZLToolKit(https://github.com/ZLMediaKit/ZLToolKit).
  *
  * Use of this source code is governed by MIT license that can be found in the
  * LICENSE file in the root of the source tree. All contributing project authors
@@ -16,20 +16,19 @@
 #include <memory>
 #include <sstream>
 #include <functional>
-#include "Poller/Timer.h"
 #include "logger.h"
+#include "Poller/Timer.h"
 #include "SqlConnection.h"
 #include "Thread/WorkThreadPool.h"
-#include "Util/ResourcePool.h"
-using namespace std;
+#include "ResourcePool.h"
 
 namespace toolkit {
 
 class SqlPool : public std::enable_shared_from_this<SqlPool> {
 public:
-    typedef std::shared_ptr<SqlPool> Ptr;
-    typedef ResourcePool<SqlConnection> PoolType;
-    typedef vector<vector<string> > SqlRetType;
+    using Ptr = std::shared_ptr<SqlPool>;
+    using PoolType = ResourcePool<SqlConnection>;
+    using SqlRetType = std::vector<std::vector<std::string> >;
 
     static SqlPool &Instance();
 
@@ -44,6 +43,10 @@ public:
     /**
      * 设置循环池对象个数
      * @param size
+     * Sets the number of loop pool objects
+     * @param size
+     
+     * [AUTO-TRANSLATED:a3f3a8ac]
      */
     void setSize(int size) {
         checkInited();
@@ -54,9 +57,14 @@ public:
      * 初始化循环池，设置数据库连接参数
      * @tparam Args
      * @param arg
+     * Initializes the loop pool and sets the database connection parameters
+     * @tparam Args
+     * @param arg
+     
+     * [AUTO-TRANSLATED:fff84748]
      */
     template<typename ...Args>
-    void Init(Args && ...arg) {
+    void Init(Args &&...arg) {
         _pool.reset(new PoolType(std::forward<Args>(arg)...));
         _pool->obtain();
     }
@@ -66,6 +74,11 @@ public:
      * 异步执行sql
      * @param str sql语句
      * @param tryCnt 重试次数
+     * Asynchronously executes SQL
+     * @param str SQL statement
+     * @param tryCnt Number of retries
+     
+     * [AUTO-TRANSLATED:9d2414e1]
      */
     template<typename ...Args>
     void asyncQuery(Args &&...args) {
@@ -78,6 +91,12 @@ public:
      * @tparam Args 可变参数类型列表
      * @param arg 可变参数列表
      * @return 影响行数
+     * Synchronously executes SQL
+     * @tparam Args Variable parameter type list
+     * @param arg Variable parameter list
+     * @return Number of affected rows
+     
+     * [AUTO-TRANSLATED:ba47cb3c]
      */
 
     template<typename ...Args>
@@ -85,10 +104,11 @@ public:
         checkInited();
         typename PoolType::ValuePtr mysql;
         try {
-            //捕获执行异常
+            //捕获执行异常  [AUTO-TRANSLATED:ae8a1093]
+            //Capture execution exceptions
             mysql = _pool->obtain();
             return mysql->query(std::forward<Args>(arg)...);
-        } catch (exception &e) {
+        } catch (std::exception &e) {
             mysql.quit();
             throw;
         }
@@ -99,16 +119,21 @@ public:
      * sql转义
      * @param str
      * @return
+     * Escapes SQL
+     * @param str
+     * @return
+     
+     * [AUTO-TRANSLATED:e7a99a20]
      */
-    string escape(const string &str) {
+    std::string escape(const std::string &str) {
         checkInited();
-        return _pool->obtain()->escape(const_cast<string &>(str));
+        return _pool->obtain()->escape(const_cast<std::string &>(str));
     }
 
 private:
-    SqlPool()  {
+    SqlPool() {
         _threadPool = WorkThreadPool::Instance().getExecutor();
-        _timer = std::make_shared<Timer>(30,[this](){
+        _timer = std::make_shared<Timer>(30, [this]() {
             flushError();
             return true;
         }, nullptr);
@@ -118,21 +143,27 @@ private:
      * 异步执行sql
      * @param sql sql语句
      * @param tryCnt 重试次数
+     * Asynchronously executes SQL
+     * @param sql SQL statement
+     * @param tryCnt Number of retries
+     
+     * [AUTO-TRANSLATED:6f585bf1]
      */
-    void asyncQuery_l(const string &sql,int tryCnt = 3) {
-        auto lam = [this,sql,tryCnt]() {
+    void asyncQuery_l(const std::string &sql, int tryCnt = 3) {
+        auto lam = [this, sql, tryCnt]() {
             int64_t rowID;
             auto cnt = tryCnt - 1;
             try {
-                syncQuery(rowID,sql);
-            }catch(exception &ex) {
-                if( cnt > 0) {
-                    //失败重试
-                    lock_guard<mutex> lk(_error_query_mutex);
-                    sqlQuery query(sql,cnt);
+                syncQuery(rowID, sql);
+            } catch (std::exception &ex) {
+                if (cnt > 0) {
+                    //失败重试  [AUTO-TRANSLATED:ef091479]
+                    //Retry on failure
+                    std::lock_guard<std::mutex> lk(_error_query_mutex);
+                    sqlQuery query(sql, cnt);
                     _error_query.push_back(query);
-                }else{
-                    WarnL <<  ex.what();
+                } else {
+                    WarnL << "SqlPool::syncQuery failed: " << ex.what();
                 }
             }
         };
@@ -141,76 +172,95 @@ private:
 
     /**
      * 定时重试失败的sql
+     * Periodically retries failed SQL
+     
+     * [AUTO-TRANSLATED:33048898]
      */
     void flushError() {
         decltype(_error_query) query_copy;
         {
-            lock_guard<mutex> lck(_error_query_mutex);
+            std::lock_guard<std::mutex> lck(_error_query_mutex);
             query_copy.swap(_error_query);
         }
         for (auto &query : query_copy) {
-            asyncQuery(query.sql_str,query.tryCnt);
+            asyncQuery(query.sql_str, query.tryCnt);
         }
     }
 
     /**
      * 检查数据库连接池是否初始化
+     * Checks if the database connection pool is initialized
+     
+     * [AUTO-TRANSLATED:176fceed]
      */
-    void checkInited(){
-        if(!_pool){
-            throw SqlException("SqlPool::checkInited","数据库连接池未初始化");
+    void checkInited() {
+        if (!_pool) {
+            throw SqlException("SqlPool::checkInited", "Mysql connection pool not initialized");
         }
     }
+
 private:
     struct sqlQuery {
-        sqlQuery(const string &sql,int cnt):sql_str(sql),tryCnt(cnt){}
-        string sql_str;
+        sqlQuery(const std::string &sql, int cnt) : sql_str(sql), tryCnt(cnt) {}
+
+        std::string sql_str;
         int tryCnt = 0;
-    } ;
+    };
+
 private:
-    deque<sqlQuery> _error_query;
+    std::deque<sqlQuery> _error_query;
     TaskExecutor::Ptr _threadPool;
-    mutex _error_query_mutex;
+    std::mutex _error_query_mutex;
     std::shared_ptr<PoolType> _pool;
     Timer::Ptr _timer;
 };
 
 /**
  * Sql语句生成器，通过占位符'？'的方式生成sql语句
+ * SQL statement generator, generates SQL statements through the '?' placeholder
+ 
+ * [AUTO-TRANSLATED:12f34981]
  */
 class SqlStream {
 public:
-    SqlStream(const char *sql) : _sql(sql){}
+    SqlStream(const char *sql) : _sql(sql) {}
+
     ~SqlStream() {}
 
     template<typename T>
-    SqlStream& operator <<(T &&data) {
+    SqlStream &operator<<(T &&data) {
         auto pos = _sql.find('?', _startPos);
-        if (pos == string::npos) {
+        if (pos == std::string::npos) {
             return *this;
         }
         _str_tmp.str("");
         _str_tmp << std::forward<T>(data);
-        string str = SqlPool::Instance().escape(_str_tmp.str());
+        std::string str = SqlPool::Instance().escape(_str_tmp.str());
         _startPos = pos + str.size();
         _sql.replace(pos, 1, str);
         return *this;
     }
-    const string& operator <<(std::ostream&(*f)(std::ostream&)) const {
+
+    const std::string &operator<<(std::ostream &(*f)(std::ostream &)) const {
         return _sql;
     }
-    operator string (){
+
+    operator std::string() {
         return _sql;
     }
+
 private:
-    stringstream _str_tmp;
-    string _sql;
-    string::size_type _startPos = 0;
+    std::stringstream _str_tmp;
+    std::string _sql;
+    std::string::size_type _startPos = 0;
 };
 
 
 /**
  * sql查询器
+ * SQL query executor
+ 
+ * [AUTO-TRANSLATED:50396624]
  */
 class SqlWriter {
 public:
@@ -218,8 +268,14 @@ public:
      * 构造函数
      * @param sql 带'？'占位符的sql模板
      * @param throwAble 是否抛异常
+     * Constructor
+     * @param sql SQL template with '?' placeholder
+     * @param throwAble Whether to throw exceptions
+     
+     * [AUTO-TRANSLATED:97c6d354]
      */
-    SqlWriter(const char *sql,bool throwAble = true) : _sqlstream(sql),_throwAble(throwAble) {}
+    SqlWriter(const char *sql, bool throwAble = true) : _sqlstream(sql), _throwAble(throwAble) {}
+
     ~SqlWriter() {}
 
     /**
@@ -227,16 +283,23 @@ public:
      * @tparam T 参数类型
      * @param data 参数
      * @return 本身引用
+     * Replaces '?' placeholders with input parameters to generate SQL statements; may throw exceptions
+     * @tparam T Parameter type
+     * @param data Parameter
+     * @return Self-reference
+     
+     * [AUTO-TRANSLATED:9bdc6917]
      */
     template<typename T>
-    SqlWriter& operator <<(T &&data) {
+    SqlWriter &operator<<(T &&data) {
         try {
             _sqlstream << std::forward<T>(data);
-        }catch (std::exception &ex){
-            //在转义sql时可能抛异常
-            if(!_throwAble){
-                WarnL << ex.what();
-            }else{
+        } catch (std::exception &ex) {
+            //在转义sql时可能抛异常  [AUTO-TRANSLATED:ce6314cc]
+            //May throw exceptions when escaping SQL
+            if (!_throwAble) {
+                WarnL << "Commit sql failed: " << ex.what();
+            } else {
                 throw;
             }
         }
@@ -246,10 +309,15 @@ public:
     /**
      * 异步执行sql，不会抛异常
      * @param f std::endl
+     * Asynchronously executes SQL, does not throw exceptions
+     * @param f std::endl
+     
+     * [AUTO-TRANSLATED:e203d266]
      */
-    void operator <<(std::ostream&(*f)(std::ostream&)) {
-        //异步执行sql不会抛异常
-        SqlPool::Instance().asyncQuery((string)_sqlstream);
+    void operator<<(std::ostream &(*f)(std::ostream &)) {
+        //异步执行sql不会抛异常  [AUTO-TRANSLATED:4370797e]
+        //Asynchronously executes SQL, does not throw exceptions
+        SqlPool::Instance().asyncQuery((std::string) _sqlstream);
     }
 
     /**
@@ -258,14 +326,21 @@ public:
      * 			   也可以是map<string,string>/Json::Value 等支持 obj["key"] = "value"操作的数据类型
      * @param ret 数据存放对象
      * @return 影响行数
+     * Synchronously executes SQL, may throw exceptions
+     * @tparam Row Data row type, can be vector<string>/list<string> or other types that support obj.emplace_back("value") operations
+     *              Can also be map<string,string>/Json::Value or other types that support obj["key"] = "value" operations
+     * @param ret Data storage object
+     * @return Number of affected rows
+     
+     * [AUTO-TRANSLATED:d8e40f96]
      */
-    template <typename Row>
-    int64_t operator <<(vector<Row> &ret) {
+    template<typename Row>
+    int64_t operator<<(std::vector<Row> &ret) {
         try {
-            _affectedRows = SqlPool::Instance().syncQuery(_rowId,ret, (string)_sqlstream);
-        }catch (std::exception &ex){
-            if(!_throwAble){
-                WarnL << ex.what();
+            _affectedRows = SqlPool::Instance().syncQuery(_rowId, ret, (std::string) _sqlstream);
+        } catch (std::exception &ex) {
+            if (!_throwAble) {
+                WarnL << "SqlPool::syncQuery failed: " << ex.what();
             } else {
                 throw;
             }
@@ -276,6 +351,10 @@ public:
     /**
      * 在insert数据库时返回插入的rowid
      * @return
+     * Returns the rowid inserted into the database when inserting data
+     * @return
+     
+     * [AUTO-TRANSLATED:699edcc4]
      */
     int64_t getRowID() const {
         return _rowId;
@@ -284,10 +363,15 @@ public:
     /**
      * 返回影响数据库数据行数
      * @return
+     * Returns the number of rows affected in the database
+     * @return
+     
+     * [AUTO-TRANSLATED:81af02d9]
      */
     int64_t getAffectedRows() const {
         return _affectedRows;
     }
+
 private:
     SqlStream _sqlstream;
     int64_t _rowId = -1;

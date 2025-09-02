@@ -2,23 +2,24 @@
 #define SRC_UTIL_FUNCTION_TRAITS_H_
 
 #include <tuple>
-using namespace std;
+#include <functional>
 
 namespace toolkit {
 
 template<typename T>
 struct function_traits;
 
-//普通函数
+//普通函数  [AUTO-TRANSLATED:569a9de3]
+//Ordinary function
 template<typename Ret, typename... Args>
 struct function_traits<Ret(Args...)>
 {
 public:
-    enum { arity = sizeof...(Args) };
-    typedef Ret function_type(Args...);
-    typedef Ret return_type;
+    static constexpr size_t arity = sizeof...(Args);
+    using function_type = Ret(Args...);
+    using return_type = Ret;
     using stl_function_type = std::function<function_type>;
-    typedef Ret(*pointer)(Args...);
+    using pointer = Ret(*)(Args...);
 
     template<size_t I>
     struct args
@@ -28,7 +29,8 @@ public:
     };
 };
 
-//函数指针
+//函数指针  [AUTO-TRANSLATED:bc15033e]
+//Function pointer
 template<typename Ret, typename... Args>
 struct function_traits<Ret(*)(Args...)> : function_traits<Ret(Args...)>{};
 
@@ -46,7 +48,8 @@ FUNCTION_TRAITS(const)
 FUNCTION_TRAITS(volatile)
 FUNCTION_TRAITS(const volatile)
 
-//函数对象
+//函数对象  [AUTO-TRANSLATED:a0091563]
+//Function object
 template<typename Callable>
 struct function_traits : function_traits<decltype(&Callable::operator())>{};
 
